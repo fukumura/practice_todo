@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { Priority } from '@prisma/client';
 import { TaskService } from '../services/taskService';
 import { BadRequestError } from '../middlewares/errorHandler';
 
