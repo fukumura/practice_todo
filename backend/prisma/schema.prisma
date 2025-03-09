@@ -1,0 +1,91 @@
+// backend/prisma/schema.prisma
+
+// データソース設定
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Prisma Clientの設定
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ユーザーモデル
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  tasks     Task[]
+  tags      Tag[]    // Tagモデルとの関連を追加
+  
+  @@map("users")
+}
+
+// タスクモデル
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  completed   Boolean    @default(false)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?  @map("due_date")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  
+  // ユーザーとの関連付け
+  userId      String     @map("user_id")
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // タグとの関連付け
+  tags        TaskTag[]
+
+  @@map("tasks")
+  @@index([userId])
+}
+
+// タスクの優先度を表す列挙型
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// タグモデル
+model Tag {
+  id        String    @id @default(uuid())
+  name      String
+  color     String    @default("#CCCCCC")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  
+  // ユーザーとの関連付け (タグはユーザーごとに管理)
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // タスクとの関連付け
+  tasks     TaskTag[]
+
+  @@unique([name, userId])
+  @@map("tags")
+  @@index([userId])
+}
+
+// タスクとタグの中間テーブル
+model TaskTag {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  tagId     String   @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, tagId])
+  @@map("task_tags")
+  @@index([taskId])
+  @@index([tagId])
+}
