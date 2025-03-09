@@ -1,0 +1,18 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 依存関係のインストールのために package.json と package-lock.json をコピー
+COPY package*.json ./
+
+# 依存関係のインストール
+RUN npm install
+
+# ソースコードのコピー
+COPY . .
+
+# Prisma Clientの生成
+RUN npx prisma generate
+
+# 開発サーバーの起動
+CMD ["npm", "run", "dev"]
