@@ -54,7 +54,7 @@
 
 #### **リポジトリのクローン**
 ```bash
-git clone https://github.com/yourusername/todo-app.git
+git clone https://github.com/fukumura/todo-app.git
 cd todo-app
 ```
 
