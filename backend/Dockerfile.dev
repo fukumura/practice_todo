@@ -1,9 +1,13 @@
-FROM node:18-alpine
+FROM --platform=linux/amd64 node:18-alpine
 
 WORKDIR /app
 
-# 依存関係のインストールのために package.json と package-lock.json をコピー
+# パッケージ管理ファイルをコピー
 COPY package*.json ./
+
+# bcryptの代わりにbcryptjsを使用
+RUN npm uninstall bcrypt || true
+RUN npm install bcryptjs
 
 # 依存関係のインストール
 RUN npm install

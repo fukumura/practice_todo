@@ -26,6 +26,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
+      args:
+        # ビルド引数としてプラットフォームを指定することもできます
+        # （Dockerfileで使用する場合）
+        BUILDPLATFORM: linux/arm64
     container_name: todo-app-backend
     restart: unless-stopped
     depends_on:
