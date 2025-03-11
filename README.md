@@ -4,11 +4,24 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
 ![React](https://img.shields.io/badge/React-18.0-61DAFB)
 ![Express](https://img.shields.io/badge/Express-4.18-green)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3-38B2AC)
 
 ## 🚀 概要
 認証機能付きのTODOアプリです。ユーザーはアカウント登録後、タスクを作成・編集・削除できます。  
 バックエンドは **Node.js (Express) + Prisma + PostgreSQL**、  
 フロントエンドは **React (Vite) + Zustand + React Query** を使用しています。
+
+## 🔄 最新のリファクタリング
+2025年3月に大規模なリファクタリングを実施し、以下の改善を行いました：
+
+- **状態管理の一元化**: コンポーネント内の状態管理からZustandストアへの移行
+- **型安全性の向上**: 明示的な型定義の追加とanyタイプの削減
+- **エラーハンドリングの改善**: より一貫性のあるエラー処理パターンの実装
+- **コンポーネントの責務分離**: 単一責任の原則に基づくコンポーネントの再設計
+- **命名規則の統一**: ファイル名とコンポーネント名のPascalCase統一
+- **パフォーマンスの最適化**: 不要な再レンダリングの削減
+
+これらの改善により、コードの保守性、可読性、および型安全性が大幅に向上しました。
 
 ## 🏗️ 技術スタック
 ### フロントエンド
@@ -16,6 +29,7 @@
 - 🔥 Zustand (状態管理)
 - 🔄 React Query (データフェッチ)
 - 🎨 shadcn/ui (UIコンポーネント)
+- 💅 Tailwind CSS (スタイリング)
 - 🌐 Axios (API通信)
 - 🏗️ ESLint & Prettier (コードフォーマット)
 
@@ -205,4 +219,3 @@ MIT
 - [ ] ドラッグ&ドロップでのタスク並べ替え
 - [ ] ユーザー間のタスク共有機能
 - [ ] タスクの期限通知
-
