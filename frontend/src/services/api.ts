@@ -1,5 +1,12 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, User } from '../store/authStore';
+import { Task, TaskFilters, ApiResponse, TasksResponse } from '../store/taskStore';
+
+// 認証レスポンスの型定義
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
 
 // API基本設定
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -43,7 +50,7 @@ api.interceptors.response.use(
 // 認証API
 export const authApi = {
   // ユーザー登録
-  register: async (email: string, password: string, name: string) => {
+  register: async (email: string, password: string, name: string): Promise<ApiResponse<AuthResponse>> => {
     const response = await api.post('/api/auth/register', {
       email,
       password,
@@ -53,7 +60,7 @@ export const authApi = {
   },
   
   // ログイン
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string): Promise<ApiResponse<AuthResponse>> => {
     const response = await api.post('/api/auth/login', {
       email,
       password,
@@ -62,7 +69,7 @@ export const authApi = {
   },
   
   // 現在のユーザー情報取得
-  getCurrentUser: async () => {
+  getCurrentUser: async (): Promise<ApiResponse<User>> => {
     const response = await api.get('/api/auth/me');
     return response.data;
   },
@@ -71,37 +78,37 @@ export const authApi = {
 // タスクAPI
 export const taskApi = {
   // タスク一覧取得
-  getTasks: async (params?: any) => {
-    const response = await api.get('/api/tasks', { params });
+  getTasks: async (filters?: TaskFilters): Promise<ApiResponse<TasksResponse>> => {
+    const response = await api.get('/api/tasks', { params: filters });
     return response.data;
   },
   
   // タスク詳細取得
-  getTask: async (id: string) => {
+  getTask: async (id: string): Promise<ApiResponse<Task>> => {
     const response = await api.get(`/api/tasks/${id}`);
     return response.data;
   },
   
   // タスク作成
-  createTask: async (data: any) => {
+  createTask: async (data: Partial<Task>): Promise<ApiResponse<Task>> => {
     const response = await api.post('/api/tasks', data);
     return response.data;
   },
   
   // タスク更新
-  updateTask: async (id: string, data: any) => {
+  updateTask: async (id: string, data: Partial<Task>): Promise<ApiResponse<Task>> => {
     const response = await api.put(`/api/tasks/${id}`, data);
     return response.data;
   },
   
   // タスク削除
-  deleteTask: async (id: string) => {
+  deleteTask: async (id: string): Promise<ApiResponse<{ success: boolean }>> => {
     const response = await api.delete(`/api/tasks/${id}`);
     return response.data;
   },
   
   // タスク完了状態切り替え
-  toggleTaskCompletion: async (id: string) => {
+  toggleTaskCompletion: async (id: string): Promise<ApiResponse<Task>> => {
     const response = await api.patch(`/api/tasks/${id}/toggle`);
     return response.data;
   },

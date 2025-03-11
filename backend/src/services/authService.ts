@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prismaClient';
 import { BadRequestError, UnauthorizedError } from '../middlewares/errorHandler';
