@@ -1,3 +1,4 @@
+// frontend/src/pages/auth/LoginPage.tsx
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '../../components/auth/LoginForm';
@@ -15,13 +16,20 @@ const LoginPage = () => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4 py-12">
+      <div className="w-full max-w-md text-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-800 mb-2">TODO App</h1>
+        <p className="text-gray-600 text-lg">タスク管理をシンプルに</p>
+      </div>
+      
       <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">TODO App</h1>
-          <p className="text-gray-600">タスク管理をシンプルに</p>
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
+          <LoginForm />
         </div>
-        <LoginForm />
+      </div>
+      
+      <div className="mt-8 text-center text-sm text-gray-500">
+        &copy; 2025 TODOアプリ | プライバシーポリシー
       </div>
     </div>
   );
