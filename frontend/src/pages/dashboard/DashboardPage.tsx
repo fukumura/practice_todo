@@ -1,15 +1,25 @@
-import { useEffect } from 'react';
+// frontend/src/pages/dashboard/DashboardPage.tsx
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
+import TaskList from '../../components/tasks/TaskList';
+import AddTaskButton from '../../components/tasks/AddTaskButton';
+import TaskFormModal from '../../components/tasks/TaskFormModal';
 
 const DashboardPage = () => {
   const { user } = useAuthStore();
   const { handleLogout, fetchCurrentUser } = useAuth();
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    // 必要に応じてユーザー情報を再取得
     fetchCurrentUser();
   }, []);
+
+  const handleTaskSaved = () => {
+    // タスクリストを更新するためのキーを変更
+    setRefreshKey(prevKey => prevKey + 1);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -30,12 +40,14 @@ const DashboardPage = () => {
         </div>
       </header>
       
-      <main className="flex-grow p-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="p-6 bg-white rounded-lg shadow">
-          <h2 className="text-lg font-medium text-gray-900">ようこそ!</h2>
-          <p className="mt-1 text-gray-600">
-            ここにタスク管理インターフェースが表示されます。実装中です...
-          </p>
+      <main className="flex-grow p-4 mx-auto w-full max-w-4xl">
+        <div className="mb-6 flex justify-between items-center">
+          <h2 className="text-lg font-medium text-gray-900">タスク一覧</h2>
+          <AddTaskButton onAddClick={() => setShowAddTask(true)} />
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-6">
+          <TaskList key={refreshKey} onRefreshNeeded={handleTaskSaved} />
         </div>
       </main>
       
@@ -46,6 +58,13 @@ const DashboardPage = () => {
           </p>
         </div>
       </footer>
+      
+      {/* タスク追加モーダル */}
+      <TaskFormModal
+        isOpen={showAddTask}
+        onClose={() => setShowAddTask(false)}
+        onTaskSaved={handleTaskSaved}
+      />
     </div>
   );
 };
