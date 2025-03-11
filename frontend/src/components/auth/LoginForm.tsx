@@ -1,8 +1,11 @@
 // frontend/src/components/auth/LoginForm.tsx
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
+
+// メールアドレスのバリデーション用正規表現
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -12,20 +15,29 @@ const LoginForm = () => {
   const { handleLogin, isSubmitting } = useAuth();
   const error = useAuthStore((state) => state.error);
 
-  const validateEmail = (email: string) => {
-    if (!email) {
+  // フォームエラーをリセット（ストアのエラーが変更された場合）
+  useEffect(() => {
+    if (error) {
+      // ストアにエラーがある場合はフォームのバリデーションエラーをクリア
+      setEmailError(null);
+      setPasswordError(null);
+    }
+  }, [error]);
+
+  const validateEmail = (email: string): boolean => {
+    if (!email.trim()) {
       setEmailError('メールアドレスを入力してください');
       return false;
     }
-    if (!email.includes('@')) {
-      setEmailError('メールアドレスに「@」を挿入してください');
+    if (!EMAIL_REGEX.test(email)) {
+      setEmailError('有効なメールアドレスを入力してください');
       return false;
     }
     setEmailError(null);
     return true;
   };
 
-  const validatePassword = (password: string) => {
+  const validatePassword = (password: string): boolean => {
     if (!password) {
       setPasswordError('パスワードを入力してください');
       return false;
@@ -41,20 +53,18 @@ const LoginForm = () => {
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
-    if (value) {
+    // 入力中は積極的なバリデーションを避ける
+    if (emailError && value.trim()) {
       validateEmail(value);
-    } else {
-      setEmailError(null);
     }
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setPassword(value);
-    if (value) {
+    // 入力中は積極的なバリデーションを避ける
+    if (passwordError && value) {
       validatePassword(value);
-    } else {
-      setPasswordError(null);
     }
   };
 

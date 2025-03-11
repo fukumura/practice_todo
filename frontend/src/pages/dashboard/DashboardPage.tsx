@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
+import { useTaskStore } from '../../store/taskStore';
 import TaskList from '../../components/tasks/TaskList';
 import AddTaskButton from '../../components/tasks/AddTaskButton';
 import TaskFormModal from '../../components/tasks/TaskFormModal';
@@ -9,16 +10,18 @@ import TaskFormModal from '../../components/tasks/TaskFormModal';
 const DashboardPage = () => {
   const { user } = useAuthStore();
   const { handleLogout, fetchCurrentUser } = useAuth();
+  const { fetchTasks } = useTaskStore();
   const [showAddTask, setShowAddTask] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
+  // コンポーネントマウント時にユーザー情報とタスクを取得
   useEffect(() => {
     fetchCurrentUser();
-  }, []);
+    fetchTasks();
+  }, []); // 依存配列を空にして初回レンダリング時のみ実行
 
   const handleTaskSaved = () => {
-    // タスクリストを更新するためのキーを変更
-    setRefreshKey(prevKey => prevKey + 1);
+    // タスクが保存されたらタスク一覧を更新
+    fetchTasks();
   };
 
   return (
@@ -47,7 +50,7 @@ const DashboardPage = () => {
         </div>
         
         <div>
-          <TaskList key={refreshKey} onRefreshNeeded={handleTaskSaved} />
+          <TaskList onRefreshNeeded={handleTaskSaved} />
         </div>
       </main>
       

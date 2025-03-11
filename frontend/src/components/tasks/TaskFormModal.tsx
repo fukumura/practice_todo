@@ -1,6 +1,6 @@
 // frontend/src/components/tasks/TaskFormModal.tsx
 import React, { useEffect, useState } from 'react';
-import { taskApi } from '../../services/api';
+import { useTaskStore, Task } from '../../store/taskStore';
 
 interface TaskFormModalProps {
   isOpen: boolean;
@@ -10,6 +10,9 @@ interface TaskFormModalProps {
 }
 
 const TaskFormModal = ({ isOpen, onClose, onTaskSaved, taskId }: TaskFormModalProps) => {
+  // Zustandストアから状態とアクションを取得
+  const { tasks, error: storeError, createTask, updateTask } = useTaskStore();
+  
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
@@ -22,30 +25,57 @@ const TaskFormModal = ({ isOpen, onClose, onTaskSaved, taskId }: TaskFormModalPr
 
   // 編集モードの場合、既存のタスク情報を取得
   useEffect(() => {
-    if (isEditMode && isOpen) {
-      const fetchTask = async () => {
+    if (isEditMode && isOpen && taskId) {
+      const fetchTaskData = async () => {
         try {
           setIsLoading(true);
-          const response = await taskApi.getTask(taskId);
-          if (response.status === 'success') {
-            const task = response.data;
+          // まずストアから該当するタスクを検索
+          const task = tasks.find(t => t.id === taskId);
+          
+          if (task) {
+            // ストアにタスクが存在する場合はそれを使用
             setTitle(task.title);
             setDescription(task.description || '');
             setPriority(task.priority);
             setDueDate(task.dueDate 
               ? new Date(task.dueDate).toISOString().split('T')[0] 
               : '');
+          } else {
+            // ストアにタスクが存在しない場合はAPIから取得
+            try {
+              const { taskApi } = await import('../../services/api');
+              const response = await taskApi.getTask(taskId);
+              
+              if (response.status === 'success') {
+                const apiTask = response.data;
+                setTitle(apiTask.title);
+                setDescription(apiTask.description || '');
+                setPriority(apiTask.priority);
+                setDueDate(apiTask.dueDate 
+                  ? new Date(apiTask.dueDate).toISOString().split('T')[0] 
+                  : '');
+              } else {
+                setError('タスクの取得に失敗しました');
+              }
+            } catch (err) {
+              setError('タスクの取得中にエラーが発生しました');
+            }
           }
-        } catch (error: any) {
-          setError(error.response?.data?.message || 'タスクの取得中にエラーが発生しました');
         } finally {
           setIsLoading(false);
         }
       };
       
-      fetchTask();
+      fetchTaskData();
     }
-  }, [isEditMode, taskId, isOpen]);
+  }, [isEditMode, taskId, isOpen, tasks]);
+
+  // ストアのエラー状態を監視
+  useEffect(() => {
+    if (storeError) {
+      setError(storeError);
+    }
+  }, [storeError]);
 
   // モーダルを閉じるときにフォームをリセット
   useEffect(() => {
@@ -79,19 +109,19 @@ const TaskFormModal = ({ isOpen, onClose, onTaskSaved, taskId }: TaskFormModalPr
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
       };
       
-      let response;
-      if (isEditMode) {
-        response = await taskApi.updateTask(taskId, taskData);
+      let result;
+      if (isEditMode && taskId) {
+        result = await updateTask(taskId, taskData);
       } else {
-        response = await taskApi.createTask(taskData);
+        result = await createTask(taskData);
       }
       
-      if (response.status === 'success') {
+      if (result) {
         onClose();
         if (onTaskSaved) onTaskSaved();
       }
-    } catch (error: any) {
-      setError(error.response?.data?.message || `タスクの${isEditMode ? '更新' : '作成'}中にエラーが発生しました`);
+    } catch (err: any) {
+      setError(`タスクの${isEditMode ? '更新' : '作成'}中にエラーが発生しました`);
     } finally {
       setIsSubmitting(false);
     }
