@@ -46,7 +46,7 @@ const DashboardPage = () => {
           <AddTaskButton onAddClick={() => setShowAddTask(true)} />
         </div>
         
-        <div className="bg-white rounded-lg shadow p-6">
+        <div>
           <TaskList key={refreshKey} onRefreshNeeded={handleTaskSaved} />
         </div>
       </main>
