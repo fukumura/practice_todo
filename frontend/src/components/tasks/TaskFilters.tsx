@@ -1,14 +1,16 @@
 // frontend/src/components/tasks/TaskFilters.tsx
 import React from 'react';
+import { TaskFilters as TaskFiltersType } from '../../store/taskStore';
 
+// タスクフィルターのプロパティ型定義
 interface TaskFiltersProps {
-  status: 'all' | 'completed' | 'incomplete';
+  status: NonNullable<TaskFiltersType['status']>;
   search: string;
-  sortBy: 'createdAt' | 'dueDate' | 'priority';
-  sortOrder: 'asc' | 'desc';
-  onStatusChange: (status: 'all' | 'completed' | 'incomplete') => void;
+  sortBy: NonNullable<TaskFiltersType['sortBy']>;
+  sortOrder: NonNullable<TaskFiltersType['sortOrder']>;
+  onStatusChange: (status: NonNullable<TaskFiltersType['status']>) => void;
   onSearchChange: (search: string) => void;
-  onSortChange: (sortBy: 'createdAt' | 'dueDate' | 'priority', sortOrder: 'asc' | 'desc') => void;
+  onSortChange: (sortBy: NonNullable<TaskFiltersType['sortBy']>, sortOrder: NonNullable<TaskFiltersType['sortOrder']>) => void;
   onReset: () => void;
 }
 

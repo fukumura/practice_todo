@@ -1,24 +1,27 @@
 // frontend/src/components/tasks/TaskList.tsx
 import React, { useEffect, useState } from 'react';
-import { taskApi } from '../../services/api';
 import TaskFormModal from './TaskFormModal';
-import DeleteConfirmDialog from './DeleteConfirmDialog';
+import DeleteConfirmDialog from './deleteConfirmDialog';
 import TaskFilters from './TaskFilters';
+import { useTaskStore, Task, TaskFilters as TaskFiltersType } from '../../store/taskStore';
 
 interface TaskListProps {
   onRefreshNeeded?: () => void;
 }
 
 const TaskList = ({ onRefreshNeeded }: TaskListProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [tasks, setTasks] = useState([]);
-  
-  // フィルター用の状態
-  const [status, setStatus] = useState<'all' | 'completed' | 'incomplete'>('all');
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'createdAt' | 'dueDate' | 'priority'>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  // Zustandストアから状態とアクションを取得
+  const { 
+    tasks, 
+    isLoading, 
+    error, 
+    filters,
+    fetchTasks, 
+    toggleTaskCompletion, 
+    deleteTask,
+    setFilters,
+    resetFilters
+  } = useTaskStore();
   
   // 編集モーダル用の状態
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -30,55 +33,22 @@ const TaskList = ({ onRefreshNeeded }: TaskListProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchTasks = async () => {
-    try {
-      setIsLoading(true);
-      
-      // フィルターパラメータを構築
-      const params: any = {
-        sortBy,
-        sortOrder,
-      };
-      
-      if (status !== 'all') {
-        params.status = status;
-      }
-      
-      if (search) {
-        params.search = search;
-      }
-      
-      const response = await taskApi.getTasks(params);
-      if (response.status === 'success') {
-        setTasks(response.data.tasks);
-      }
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'タスクの取得中にエラーが発生しました');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // コンポーネントマウント時にタスクを取得
   useEffect(() => {
     fetchTasks();
-  }, [status, search, sortBy, sortOrder]);
+  }, [fetchTasks]);
 
   const handleToggleCompletion = async (taskId: string) => {
-    try {
-      await taskApi.toggleTaskCompletion(taskId);
-      fetchTasks();
-      if (onRefreshNeeded) onRefreshNeeded();
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'タスクの更新中にエラーが発生しました');
-    }
+    await toggleTaskCompletion(taskId);
+    if (onRefreshNeeded) onRefreshNeeded();
   };
   
-  const handleEditClick = (task: any) => {
+  const handleEditClick = (task: Task) => {
     setEditingTaskId(task.id);
     setShowEditModal(true);
   };
   
-  const handleDeleteClick = (task: any) => {
+  const handleDeleteClick = (task: Task) => {
     setDeletingTaskId(task.id);
     setDeletingTaskTitle(task.title);
     setShowDeleteDialog(true);
@@ -89,12 +59,11 @@ const TaskList = ({ onRefreshNeeded }: TaskListProps) => {
     
     try {
       setIsDeleting(true);
-      await taskApi.deleteTask(deletingTaskId);
-      setShowDeleteDialog(false);
-      fetchTasks();
-      if (onRefreshNeeded) onRefreshNeeded();
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'タスクの削除中にエラーが発生しました');
+      const success = await deleteTask(deletingTaskId);
+      if (success) {
+        setShowDeleteDialog(false);
+        if (onRefreshNeeded) onRefreshNeeded();
+      }
     } finally {
       setIsDeleting(false);
       setDeletingTaskId(null);
@@ -107,34 +76,30 @@ const TaskList = ({ onRefreshNeeded }: TaskListProps) => {
     if (onRefreshNeeded) onRefreshNeeded();
   };
   
-  const handleStatusChange = (newStatus: 'all' | 'completed' | 'incomplete') => {
-    setStatus(newStatus);
+  const handleStatusChange = (status: 'all' | 'completed' | 'incomplete') => {
+    setFilters({ status });
   };
   
-  const handleSearchChange = (newSearch: string) => {
-    setSearch(newSearch);
+  const handleSearchChange = (search: string) => {
+    setFilters({ search });
   };
   
-  const handleSortChange = (newSortBy: 'createdAt' | 'dueDate' | 'priority', newSortOrder: 'asc' | 'desc') => {
-    setSortBy(newSortBy);
-    setSortOrder(newSortOrder);
+  const handleSortChange = (sortBy: 'createdAt' | 'dueDate' | 'priority', sortOrder: 'asc' | 'desc') => {
+    setFilters({ sortBy, sortOrder });
   };
   
   const handleReset = () => {
-    setStatus('all');
-    setSearch('');
-    setSortBy('createdAt');
-    setSortOrder('desc');
+    resetFilters();
   };
 
   return (
     <>
       {/* フィルター */}
       <TaskFilters
-        status={status}
-        search={search}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
+        status={filters.status || 'all'}
+        search={filters.search || ''}
+        sortBy={filters.sortBy || 'createdAt'}
+        sortOrder={filters.sortOrder || 'desc'}
         onStatusChange={handleStatusChange}
         onSearchChange={handleSearchChange}
         onSortChange={handleSortChange}
@@ -156,11 +121,11 @@ const TaskList = ({ onRefreshNeeded }: TaskListProps) => {
         // タスクが存在しない場合
         <div className="text-center py-10">
           <p className="text-gray-500">
-            {search ? 
-              `"${search}"に一致するタスクはありません` : 
-              status === 'completed' ? 
+            {filters.search ? 
+              `"${filters.search}"に一致するタスクはありません` : 
+              filters.status === 'completed' ? 
                 '完了済みのタスクはありません' : 
-                status === 'incomplete' ? 
+                filters.status === 'incomplete' ? 
                   '未完了のタスクはありません' : 
                   'タスクがありません。新しいタスクを追加しましょう！'
             }
@@ -169,7 +134,7 @@ const TaskList = ({ onRefreshNeeded }: TaskListProps) => {
       ) : (
         // タスク一覧
         <div className="space-y-4">
-          {tasks.map((task: any) => (
+          {tasks.map((task) => (
             <div
               key={task.id}
               className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
